@@ -26,10 +26,6 @@ command references:
 
 https://www.eevblog.com/forum/testgear/hp-agilent-34401a-hidden-menu/msg4436983/#msg4436983
 
-## Build
-```
-gcc.exe -c main.c
-```
 ## Dependencies
 libhp34401A https://github.com/squadtak/libhp34401A
 
