@@ -2,7 +2,7 @@
 
 Calibration EEPROM backup tool for HPAK 34401A
 
-connect via RS-232.
+connect via RS-232. 9600 8N "2"
 
 ```
 HPAK34401ACalTool Ver 1.0 2026-06-22 (C)2026 squad
