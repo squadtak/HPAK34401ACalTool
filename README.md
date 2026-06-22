@@ -1,4 +1,4 @@
-# HP/Agilent/Keysight 34401A Calibration EEPROM backup tool
+# HP/Agilent/Keysight 34401A EEPROM backup tool
 
 Calibration EEPROM backup tool for HPAK 34401A
 
