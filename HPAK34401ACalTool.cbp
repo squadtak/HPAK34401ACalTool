@@ -14,7 +14,7 @@
 				<Option parameters="-dm -cp COM15" />
 				<Compiler>
 					<Add option="-g" />
-					<Add directory="../libhp34401A" />
+					<Add directory="../../c_snippets/libhp34401A" />
 				</Compiler>
 				<Linker>
 					<Add library="serialport" />
@@ -30,7 +30,7 @@
 					<Add option="-fexpensive-optimizations" />
 					<Add option="-ffunction-sections -fdata-sections" />
 					<Add option="-Os" />
-					<Add directory="../libhp34401A" />
+					<Add directory="../../c_snippets/libhp34401A" />
 				</Compiler>
 				<Linker>
 					<Add option="-Wl,--gc-sections,--print-gc-sections" />
@@ -44,7 +44,7 @@
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
-		<Unit filename="../libhp34401A/libhp34401A.c">
+		<Unit filename="../../c_snippets/libhp34401A/libhp34401A.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="main.c">

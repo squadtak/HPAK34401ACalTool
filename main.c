@@ -1,11 +1,11 @@
-#define VERSION			"HPAK34401ACalTool Ver 1.0 2026-06-22"
+#define VERSION			"HPAK34401ACalTool Ver 1.1 2026-06-22"
 #define SIGNATURE		"(C)2026 squad"
 #define HELP_STRINGS  	("\
 USAGE: HPAK34401ACalTool.exe [mode] [-cp|--com-port [COM|com<decimal>]] [-fp|--file-path \"<path>\"]\n\n\
 mode:\n\
  -h, --help\t\tdisplay this help and exit.\n\
  -dm, --dump-mode\tDump Calibration from 34401A to computer.\n\
- \t\t\tIf the --com-port option is not specified, the default output path is used.\n\
+ \t\t\tIf the --file-path option is not specified, the default output path is used.\n\
  \t\t\t(\"currentDirectory\\caldump.bin\")\n\
  -fm, --flash-mode\tFlashing Calibration from computer to 34401A. (not implemented)\n\n\
 Example:\n\
@@ -25,10 +25,8 @@ int open_comport(char *portname, int baudrate, int bits, enum sp_parity parity, 
 
 int main(int argc, char **argv)
 {
-	printf("%s %s", VERSION, SIGNATURE);
-	printf("\r\n\r\n");
+	printf("%s %s\n\n", VERSION, SIGNATURE);
 
-	int mode = 0;
 	int ret = -1;
 
 	if(argc < 2){
@@ -37,39 +35,33 @@ int main(int argc, char **argv)
 		goto err1;
 	}
 
-	char  *current_directory = NULL;
+	char *current_directory = NULL;
 	if(!(current_directory = getcwd(current_directory, 0))){
 		printf("[ERROR]getcwd error, errno = %d, strerror = %s\n", errno, strerror(errno));
 		goto err1;
 	}
 
+	int mode = 0;
 	char *port = NULL;
 	char *file_path = NULL;
 
 	for(int i = 1; i < argc; i++){
 		if((strstr(argv[i], "-H") - argv[i]) == 0 || (strstr(argv[i], "-h") - argv[i]) == 0 || (strstr(argv[i], "--help") - argv[i]) == 0){
+			printf(HELP_STRINGS);
 			ret = 0;
 			goto err1;
 		}
 
-		if((strstr(argv[i], "-DM") - argv[i]) == 0 || (strstr(argv[i], "-dm") - argv[i]) == 0 || (strstr(argv[i], "--dump-mode") - argv[i]) == 0){
-			mode = 1;
-		}
+		if((strstr(argv[i], "-DM") - argv[i]) == 0 || (strstr(argv[i], "-dm") - argv[i]) == 0 || (strstr(argv[i], "--dump-mode") - argv[i]) == 0) mode = 1;
 
-		if((strstr(argv[i], "-FM") - argv[i]) == 0 || (strstr(argv[i], "-fm") - argv[i]) == 0 || (strstr(argv[i], "--flash-mode") - argv[i]) == 0){
-			mode = 2;
-		}
+		if((strstr(argv[i], "-FM") - argv[i]) == 0 || (strstr(argv[i], "-fm") - argv[i]) == 0 || (strstr(argv[i], "--flash-mode") - argv[i]) == 0) mode = 2;
 
 		if((strstr(argv[i], "-CP") - argv[i]) == 0 || (strstr(argv[i], "-cp") - argv[i]) == 0 || (strstr(argv[i], "--com-port") - argv[i]) == 0){
-			if(argv[i + 1] != NULL){
-				port = argv[i + 1];
-			}
+			if(argv[i + 1]) port = argv[i + 1];
 		}
 
 		if((strstr(argv[i], "-FP") - argv[i]) == 0 || (strstr(argv[i], "-fp") - argv[i]) == 0 || (strstr(argv[i], "--file-path") - argv[i]) == 0){
-			if(argv[i + 1] != NULL){
-				file_path = argv[i + 1];
-			}
+			if(argv[i + 1]) file_path = argv[i + 1];
 		}
 	}
 
@@ -81,7 +73,8 @@ int main(int argc, char **argv)
 	printf("[INFO]COM port = %s\n", port);
 
 	switch(mode){
-		case 1:
+
+		case 1:{
 
 			int filepath_alloc_flag = 0;
 			if(file_path == NULL){
@@ -97,34 +90,42 @@ int main(int argc, char **argv)
 				printf("[WARNING]Output Calibration file path is not specified. using default path.\n");
 				filepath_alloc_flag = 1;
 			}
+
 			printf("[INFO]Output Calibration file path = %s\n", file_path);
 
 			printf("[INFO]Dump Calibration mode.\n");
-			if(dumpCal(file_path, port) < 0){
+			if(dumpCal(file_path, port)){
 				if(filepath_alloc_flag) free(file_path);
 				goto err2;
 			}
 
 			if(filepath_alloc_flag) free(file_path);
-			break;
 
-		case 2:
+			break;
+		}
+
+		case 2:{
 
 			if(file_path == NULL){
 				printf("[ERROR]Input Calibration file path is not specified.\n");
 				goto err2;
 			}
+
 			printf("[INFO]Input Calibration file path = %s\n", file_path);
 
 			printf("[INFO]Flash Calibration mode.\n");
 			if((ret = flashCal(file_path, port)) < 0){
 				goto err2;
 			}
-			break;
 
-		default:
+			break;
+		}
+
+		default:{
+
 			printf("[ERROR]Unknown mode.\n");
 			goto err2;
+		}
 	}
 
 	ret = 0;
@@ -142,29 +143,23 @@ int dumpCal(char *dumpPath, char *port)
 	int ret = -1;
 
 	struct sp_port *portHandle;
-
 	if(open_comport(port, 9600, 8, SP_PARITY_NONE, 2, SP_FLOWCONTROL_DTRDSR, &portHandle)) goto err1;
 
-	if(sp_flush(portHandle, SP_BUF_BOTH)){
-		printf("[ERROR]sp_flush error.\n");
+	int rett = is34401A(portHandle);
+	if(rett == 0){
+
+		printf("[ERROR]Target is not HPAK 34401A.\n");
 		goto err2;
-	}
 
-	int rett = 0;
-	if((rett = is34401A(portHandle)) < 1){
-
-		if(rett == 0){
-			printf("[ERROR]Target is not HPAK 34401A.\n");
-			goto err2;
-		}
+	}else if(rett < 0){
 
 		printf("[ERROR]is34401A error.\n");
 		goto err2;
+
 	}
 
 	FILE *filehandle;
-
-	if((filehandle = fopen(dumpPath, "wb")) == NULL){
+	if(!(filehandle = fopen(dumpPath, "wb"))){
 		printf("[ERROR]dump file create error, errno = %d, strerror = %s\n", errno, strerror(errno));
 		goto err2;
 	}
@@ -212,7 +207,6 @@ int dumpCal(char *dumpPath, char *port)
 	ret = 0;
 err3:
 	fclose(filehandle);
-
 err2:
 	if(sp_close(portHandle) < 0) { printf("[ERROR]COM port close error.\n"); ret = -1; goto err1; }
 	sp_free_port(portHandle);
