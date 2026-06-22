@@ -31,7 +31,7 @@ https://www.eevblog.com/forum/testgear/hp-agilent-34401a-hidden-menu/msg4436983/
 gcc.exe -c main.c
 ```
 ## Dependencies
-libserialport https://github.com/sigrokproject/libserialport
+libhp34401A https://github.com/squadtak/libhp34401A
 
 ## To-Do
 flashing eeprom
