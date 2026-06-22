@@ -5,14 +5,14 @@ Calibration EEPROM backup tool for HPAK 34401A
 connect via RS-232. 9600 8N "2"
 
 ```
-HPAK34401ACalTool Ver 1.0 2026-06-22 (C)2026 squad
+HPAK34401ACalTool Ver 1.1 2026-06-22 (C)2026 squad
 
 USAGE: HPAK34401ACalTool.exe [mode] [-cp|--com-port [COM|com<decimal>]] [-fp|--file-path "<path>"]
 
 mode:
  -h, --help             display this help and exit.
  -dm, --dump-mode       Dump Calibration from 34401A to computer.
-                        If the --com-port option is not specified, the default output path is used.
+                        If the --file-path option is not specified, the default output path is used.
                         ("currentDirectory\caldump.bin")
  -fm, --flash-mode      Flashing Calibration from computer to 34401A. (not implemented)
 
