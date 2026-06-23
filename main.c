@@ -1,4 +1,4 @@
-#define VERSION			"HPAK34401ACalTool Ver 1.1 2026-06-22"
+#define VERSION			"HPAK34401ACalTool Ver 1.2 2026-06-23"
 #define SIGNATURE		"(C)2026 squad"
 #define HELP_STRINGS  	("\
 USAGE: HPAK34401ACalTool.exe [mode] [-cp|--com-port [COM|com<decimal>]] [-fp|--file-path \"<path>\"]\n\n\
@@ -22,6 +22,11 @@ int dumpCal(char *dumpPath, char *port);
 int flashCal(char *dumpPath, char *port);
 
 int open_comport(char *portname, int baudrate, int bits, enum sp_parity parity, int stopbits, enum sp_flowcontrol flowcontrol, struct sp_port **port);
+
+int sendCommand(struct sp_port *port, char *command);
+int sendCommandWithRead(struct sp_port *port, char *command, size_t delay_read_data, char **readData);
+int printText(struct sp_port *port, size_t scrollDelay, char *format, ...);
+
 
 int main(int argc, char **argv)
 {
@@ -164,25 +169,22 @@ int dumpCal(char *dumpPath, char *port)
 		goto err2;
 	}
 
-	hp34401ASendCommand(portHandle, "SYST:RWL");
+	if(sendCommand(portHandle, "SYST:RWL")) goto err3;
 
-	hp34401APrintText(portHandle, 0, "CALDUMP STRT");
-	hp34401ASendCommand(portHandle, "SYST:BEEP;");
-	hp34401ASendCommand(portHandle, "SYST:BEEP;");
+	if(printText(portHandle, 0, "CALDUMP STRT")) goto err3;
+	if(sendCommand(portHandle, "SYST:BEEP;")) goto err3;
+	if(sendCommand(portHandle, "SYST:BEEP;")) goto err3;
 	sleep(2);
 
 	for(int memCnt = 0; memCnt < 256; memCnt++){
 		printf("[INFO]dumped:%3d%%\r", (int)(((float)memCnt / 255) * 100));
-		hp34401APrintText(portHandle, 0, "CALDUMP %3d%%", (int)(((float)memCnt / 255) * 100));
+		if(printText(portHandle, 0, "CALDUMP %3d%%", (int)(((float)memCnt / 255) * 100))) goto err3;
 		char *readBuf = NULL;
 
 		char sendCommandBuf[30];
 		sprintf(sendCommandBuf, "DIAG:PEEK? -1,%d,0", memCnt);
 
-		if(hp34401ASendCommandWithRead(portHandle, sendCommandBuf, 0, &readBuf) < 0){
-			printf("\n[ERROR]sendCommandWithRead error.\n");
-			goto err3;
-		}
+		if(sendCommandWithRead(portHandle, sendCommandBuf, 0, &readBuf)) goto err3;
 
 		unsigned int readData = strtol(readBuf, NULL, 10);
 
@@ -196,13 +198,13 @@ int dumpCal(char *dumpPath, char *port)
 	printf("\n");
 	printf("[INFO]finished dump.\n");
 
-	hp34401APrintText(portHandle, 0, "CALDUMP END");
-	hp34401ASendCommand(portHandle, "SYST:BEEP;");
-	hp34401ASendCommand(portHandle, "SYST:BEEP;");
+	if(printText(portHandle, 0, "CALDUMP END")) goto err3;
+	if(sendCommand(portHandle, "SYST:BEEP;")) goto err3;
+	if(sendCommand(portHandle, "SYST:BEEP;")) goto err3;
 	sleep(2);
 
-	hp34401ASendCommand(portHandle, "SYST:BEEP;");
-	hp34401ASendCommand(portHandle, "SYST:LOC");
+	if(sendCommand(portHandle, "SYST:BEEP;")) goto err3;
+	if(sendCommand(portHandle, "SYST:LOC")) goto err3;
 
 	ret = 0;
 err3:
@@ -221,7 +223,6 @@ int flashCal(char *dumpPath, char *port)
 }
 
 //functions
-
 int open_comport(char *portname, int baudrate, int bits, enum sp_parity parity, int stopbits, enum sp_flowcontrol flowcontrol, struct sp_port **port)
 {
 	if(sp_get_port_by_name(portname, port) < 0){
@@ -261,4 +262,31 @@ int open_comport(char *portname, int baudrate, int bits, enum sp_parity parity, 
 
 	printf("[INFO]COM port = %s, opened.\n", portname);
 	return 0;
+}
+
+int sendCommand(struct sp_port *port, char *command)
+{
+	int ret = hp34401ASendCommand(port, command);
+	if(ret < 0) printf("\n[ERROR]hp34401ASendCommand error.\n");
+	return ret;
+}
+
+int sendCommandWithRead(struct sp_port *port, char *command, size_t delay_read_data, char **readData)
+{
+	int ret = hp34401ASendCommandWithRead(port, command, delay_read_data, readData);
+	if(ret != 0) printf("\n[ERROR]hp34401ASendCommandWithRead error.\n");
+	return ret;
+}
+
+int printText(struct sp_port *port, size_t scrollDelay, char *format, ...)
+{
+	va_list vList;
+	va_start(vList, format);
+
+	int ret = hp34401APrintTextV(port, scrollDelay, format, vList);
+
+	if(ret != 0) printf("\n[ERROR]hp34401APrintTextV error.\n");
+
+	va_end(vList);
+	return ret;
 }
