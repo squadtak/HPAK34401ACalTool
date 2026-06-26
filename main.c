@@ -1,4 +1,4 @@
-#define VERSION			"HPAK34401ACalTool Ver 1.2 2026-06-23"
+#define VERSION			"HPAK34401ACalTool Ver 1.3 2026-06-26"
 #define SIGNATURE		"(C)2026 squad"
 #define HELP_STRINGS  	("\
 USAGE: HPAK34401ACalTool.exe [mode] [-cp|--com-port [COM|com<decimal>]] [-fp|--file-path \"<path>\"]\n\n\
@@ -18,7 +18,7 @@ HPAK34401ACalTool -fm -cp COM3 -fp \"<filepath>\"\n\n")
 #include <stdlib.h>
 #include "libhp34401A.h"
 
-int dumpCal(char *dumpPath, char *port);
+int dumpCal(char **dumpPath, int defaultPathFlag, char *port);
 int flashCal(char *dumpPath, char *port);
 
 int open_comport(char *portname, int baudrate, int bits, enum sp_parity parity, int stopbits, enum sp_flowcontrol flowcontrol, struct sp_port **port);
@@ -26,7 +26,6 @@ int open_comport(char *portname, int baudrate, int bits, enum sp_parity parity, 
 int sendCommand(struct sp_port *port, char *command);
 int sendCommandWithRead(struct sp_port *port, char *command, size_t delay_read_data, char **readData);
 int printText(struct sp_port *port, size_t scrollDelay, char *format, ...);
-
 
 int main(int argc, char **argv)
 {
@@ -99,7 +98,7 @@ int main(int argc, char **argv)
 			printf("[INFO]Output Calibration file path = %s\n", file_path);
 
 			printf("[INFO]Dump Calibration mode.\n");
-			if(dumpCal(file_path, port)){
+			if(dumpCal(&file_path, filepath_alloc_flag, port)){
 				if(filepath_alloc_flag) free(file_path);
 				goto err2;
 			}
@@ -143,7 +142,7 @@ err1:
 	return ret;
 }
 
-int dumpCal(char *dumpPath, char *port)
+int dumpCal(char **dumpPath, int defaultPathFlag, char *port)
 {
 	int ret = -1;
 
@@ -163,12 +162,30 @@ int dumpCal(char *dumpPath, char *port)
 
 	}
 
+	if(defaultPathFlag){
+
+		unsigned int firmVer;
+		unsigned int ioVer;
+		unsigned int frontVer;
+		if(hp34401AGetIDN(portHandle, NULL, NULL, &firmVer, &ioVer, &frontVer)) goto err2;
+
+		char *dumpPathBuf = realloc(*dumpPath, strlen(*dumpPath) + sizeof("_XX-XX-XX"));
+		if(!dumpPathBuf) goto err2;
+		*dumpPath = dumpPathBuf;
+
+		char *extPos = strrchr(*dumpPath, '.');
+		memcpy(extPos + (sizeof("_XX-XX-XX") - 1), extPos, strlen(extPos) + 1);
+
+		char verBuf[sizeof("_XX-XX-XX")];
+		sprintf(verBuf, "_%02u-%02u-%02u", firmVer, ioVer, frontVer);
+		memcpy(extPos, verBuf, strlen(verBuf));
+	}
+
 	FILE *filehandle;
-	if(!(filehandle = fopen(dumpPath, "wb"))){
+	if(!(filehandle = fopen(*dumpPath, "wb"))){
 		printf("[ERROR]dump file create error, errno = %d, strerror = %s\n", errno, strerror(errno));
 		goto err2;
 	}
-
 	if(sendCommand(portHandle, "SYST:RWL")) goto err3;
 
 	if(printText(portHandle, 0, "CALDUMP STRT")) goto err3;
@@ -177,6 +194,7 @@ int dumpCal(char *dumpPath, char *port)
 	sleep(2);
 
 	for(int memCnt = 0; memCnt < 256; memCnt++){
+
 		printf("[INFO]dumped:%3d%%\r", (int)(((float)memCnt / 255) * 100));
 		if(printText(portHandle, 0, "CALDUMP %3d%%", (int)(((float)memCnt / 255) * 100))) goto err3;
 		char *readBuf = NULL;
