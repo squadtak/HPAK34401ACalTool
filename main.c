@@ -95,8 +95,6 @@ int main(int argc, char **argv)
 				filepath_alloc_flag = 1;
 			}
 
-			printf("[INFO]Output Calibration file path = %s\n", file_path);
-
 			printf("[INFO]Dump Calibration mode.\n");
 			if(dumpCal(&file_path, filepath_alloc_flag, port)){
 				if(filepath_alloc_flag) free(file_path);
@@ -180,6 +178,8 @@ int dumpCal(char **dumpPath, int defaultPathFlag, char *port)
 		sprintf(verBuf, "_%02u-%02u-%02u", firmVer, ioVer, frontVer);
 		memcpy(extPos, verBuf, strlen(verBuf));
 	}
+
+	printf("[INFO]Output Calibration file path = %s\n", *dumpPath);
 
 	FILE *filehandle;
 	if(!(filehandle = fopen(*dumpPath, "wb"))){
