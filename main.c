@@ -1,4 +1,4 @@
-#define VERSION			"HPAK34401ACalTool Ver 1.4 2026-06-29"
+#define VERSION			"HPAK34401ACalTool Ver 1.5 2026-06-29"
 #define SIGNATURE		"(C)2026 squad"
 #define HELP_STRINGS  	("\
 USAGE: HPAK34401ACalTool [mode] [-cp|--com-port [COM|com<decimal>]] [-fp|--file-path \"<path>\"]\n\n\
@@ -221,7 +221,9 @@ foundPort:
 
 		unsigned short readData = strtol(readBuf, NULL, 10);
 
-		if(memCnt * 2 == ((firmVer >= 07) ? hp34401ACalChksumTableLater[chksumTablePos] : hp34401ACalChksumTableEarly[chksumTablePos])){
+		if(chksumTablePos < ((firmVer >= 07) ? (sizeof(hp34401ACalChksumTableLater) / sizeof(hp34401ACalChksumTableLater[0])) : (sizeof(hp34401ACalChksumTableEarly) / sizeof(hp34401ACalChksumTableEarly[0]))) &&
+			memCnt * 2 == ((firmVer >= 07) ? hp34401ACalChksumTableLater[chksumTablePos] : hp34401ACalChksumTableEarly[chksumTablePos])){
+
 			if(chksumVal + chksumCompLen != readData){
 
 				printf("\n[ERROR]checksum does not match. Val = 0x%04X, Expected = 0x%04X\n", chksumVal + chksumCompLen, readData);
