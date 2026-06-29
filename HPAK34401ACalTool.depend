@@ -1,16 +1,18 @@
 # depslib dependency file v1.0
-1782485402 source:d:\codeblocks\projects\hpak34401acaltool\main.c
+1782731566 source:d:\codeblocks\projects\hpak34401acaltool\main.c
 	<stdio.h>
 	<unistd.h>
 	<stdlib.h>
+	<libserialport.h>
+	"libfile.h"
 	"libhp34401A.h"
 
-1782484281 d:\codeblocks\c_snippets\libhp34401a\libhp34401a.h
+1782730003 d:\codeblocks\c_snippets\libhp34401a\libhp34401a.h
 	<stdio.h>
 	<stdarg.h>
 	<libserialport.h>
 
-1782484450 source:d:\codeblocks\c_snippets\libhp34401a\libhp34401a.c
+1782729917 source:d:\codeblocks\c_snippets\libhp34401a\libhp34401a.c
 	"libhp34401A.h"
 	<stdlib.h>
 	<string.h>
