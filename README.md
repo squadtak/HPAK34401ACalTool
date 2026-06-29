@@ -29,7 +29,9 @@ command references:
 https://www.eevblog.com/forum/testgear/hp-agilent-34401a-hidden-menu/msg4436983/#msg4436983
 
 ## Dependencies
+libserialport by sigrokproject https://github.com/sigrokproject/libserialport
 libhp34401A https://github.com/squadtak/libhp34401A
+libfile https://github.com/squadtak/libfile
 
 ## To-Do
 flashing eeprom
